@@ -133,13 +133,13 @@ class KafkaSimulator:
         self.running = True
         print("[KAFKA] Kafka simulator started")
 
-class TwitterStreamSimulator:
-    """Simulates Twitter streaming"""
+class TelegramBotSimulator:
+    """Simulates Telegram Bot receiving complaints"""
     
     def __init__(self, kafka):
         self.kafka = kafka
         self.running = False
-        self.sample_tweets = [
+        self.sample_complaints = [
             "Train 12345 is delayed by 2 hours! PNR: 1234567890 Urgent help needed @RailMinIndia",
             "Great service on Indian Railways! Comfortable journey, clean coaches.",
             "Medical emergency in coach S3. Need immediate assistance. PNR: 9876543210",
@@ -153,28 +153,32 @@ class TwitterStreamSimulator:
         ]
     
     def start_streaming(self):
-        """Start streaming tweets"""
+        """Start receiving complaints via Telegram Bot simulation"""
         self.running = True
-        print("[TWITTER STREAM] Starting Twitter stream simulation...")
+        print("[TELEGRAM BOT] Starting Telegram Bot simulation...")
         
-        tweet_id = int(time.time() * 1000)
-        for i, tweet_text in enumerate(self.sample_tweets):
+        complaint_id = int(time.time() * 1000)
+        for i, complaint_text in enumerate(self.sample_complaints):
             if not self.running:
                 break
             
-            tweet_data = {
-                'tweet_id': tweet_id + i,
-                'text': tweet_text,
-                'author_id': f'user{i+1}',
-                'created_at': datetime.now().isoformat()
+            complaint_data = {
+                'complaint_id': complaint_id + i,
+                'text': complaint_text,
+                'user_id': 1000000 + i,
+                'username': f'user{i+1}',
+                'first_name': f'User{i+1}',
+                'last_name': '',
+                'chat_id': 1000000 + i,
+                'timestamp': datetime.now().isoformat()
             }
             
             # Send to Kafka
-            self.kafka.produce('twitterstream', json.dumps(tweet_data))
-            print(f"[TWITTER STREAM] Tweet {i+1}/{len(self.sample_tweets)} sent to Kafka")
-            time.sleep(2)  # Simulate streaming delay
+            self.kafka.produce('raw_tweets', json.dumps(complaint_data))
+            print(f"[TELEGRAM BOT] Complaint {i+1}/{len(self.sample_complaints)} sent to Kafka")
+            time.sleep(2)  # Simulate message delay
         
-        print("[TWITTER STREAM] Streaming completed")
+        print("[TELEGRAM BOT] Bot simulation completed")
 
 class SparkProcessor:
     """Simulates Spark processing"""
@@ -247,9 +251,9 @@ class FullSystemRunner:
         self.spark = SparkProcessor(self.kafka, self.db)
         self.spark.start_processing()
         
-        # Step 4: Setup Twitter Stream (Step 7 in QUICKSTART)
-        print("[STEP 7] Setting up Twitter stream...")
-        self.twitter_stream = TwitterStreamSimulator(self.kafka)
+        # Step 4: Setup Telegram Bot (Step 7 in QUICKSTART)
+        print("[STEP 7] Setting up Telegram Bot...")
+        self.telegram_bot = TelegramBotSimulator(self.kafka)
     
     def run(self):
         """Run the full system"""
@@ -257,13 +261,13 @@ class FullSystemRunner:
         print("Starting Full System")
         print("=" * 70)
         
-        # Start Twitter streaming in background
-        stream_thread = threading.Thread(target=self.twitter_stream.start_streaming)
-        stream_thread.daemon = True
-        stream_thread.start()
+        # Start Telegram Bot in background
+        bot_thread = threading.Thread(target=self.telegram_bot.start_streaming)
+        bot_thread.daemon = True
+        bot_thread.start()
         
-        # Wait for streaming to complete
-        stream_thread.join()
+        # Wait for bot simulation to complete
+        bot_thread.join()
         
         # Give time for processing
         time.sleep(3)
@@ -306,7 +310,7 @@ class FullSystemRunner:
         print("  [OK] Database (SQLite)")
         print("  [OK] Kafka Simulator")
         print("  [OK] Spark Processor")
-        print("  [OK] Twitter Stream")
+        print("  [OK] Telegram Bot")
         print("\nTo view web dashboard, open: dashboard.html")
         print("Database file: local_twitter.db")
 

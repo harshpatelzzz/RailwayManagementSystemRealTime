@@ -18,14 +18,10 @@ DB_NAME=twitter
 # Kafka Configuration
 KAFKA_BROKER=localhost:9092
 KAFKA_BROKERS=localhost:9092
-KAFKA_TOPIC=twitterstream
+KAFKA_TOPIC=raw_tweets
 
-# Twitter API Configuration
-TWITTER_BEARER_TOKEN=your_bearer_token
-TWITTER_CONSUMER_KEY=your_consumer_key
-TWITTER_CONSUMER_SECRET=your_consumer_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret
+# Telegram Bot Configuration
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
 
 # Model Configuration
 TRAINING_DATA_PATH=data/training_data.csv

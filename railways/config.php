@@ -11,11 +11,8 @@ define('DB_USER', getenv('DB_USER') ?: (getenv('MYSQL_USER') ?: 'railsewa'));
 define('DB_PASSWORD', getenv('DB_PASSWORD') ?: (getenv('MYSQL_PASSWORD') ?: ''));
 define('DB_NAME', getenv('DB_NAME') ?: (getenv('MYSQL_DATABASE') ?: 'twitter'));
 
-// Twitter API Configuration
-define('TWITTER_CONSUMER_KEY', getenv('TWITTER_CONSUMER_KEY') ?: '');
-define('TWITTER_CONSUMER_SECRET', getenv('TWITTER_CONSUMER_SECRET') ?: '');
-define('TWITTER_ACCESS_TOKEN', getenv('TWITTER_ACCESS_TOKEN') ?: '');
-define('TWITTER_ACCESS_TOKEN_SECRET', getenv('TWITTER_ACCESS_TOKEN_SECRET') ?: '');
+// Telegram Bot Configuration
+define('TELEGRAM_BOT_TOKEN', getenv('TELEGRAM_BOT_TOKEN') ?: '');
 
 // Application Configuration
 define('APP_NAME', 'RailSewa - Indian Railways Complaint Management');

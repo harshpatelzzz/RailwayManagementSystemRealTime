@@ -1,6 +1,6 @@
 """
-Live Processing of Tweets using Spark Streaming
-Reads from Kafka, processes tweets, and saves to MySQL
+Live Processing of Telegram Complaints using Spark Streaming
+Reads from Kafka, processes complaints, and saves to MySQL
 """
 
 from pyspark.sql import SparkSession
@@ -40,8 +40,8 @@ def get_db_connection():
         print(f"Database connection error: {e}")
         return None
 
-def save_tweet_to_db(tweet_data):
-    """Save processed tweet to MySQL database"""
+def save_complaint_to_db(complaint_data):
+    """Save processed complaint to MySQL database"""
     connection = get_db_connection()
     if not connection:
         return False
@@ -49,18 +49,23 @@ def save_tweet_to_db(tweet_data):
     try:
         cursor = connection.cursor()
         
+        # Check if user_id and chat_id columns exist (for backward compatibility)
+        # If they don't exist, use simpler insert
         sql = """
         INSERT INTO tweets 
-        (tweet, username, pnr, prediction, tweet_id, time, response_status) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        (tweet, username, pnr, prediction, tweet_id, user_id, chat_id, source, time, response_status) 
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         
         values = (
-            tweet_data.get('tweet', ''),
-            tweet_data.get('username', ''),
-            tweet_data.get('pnr'),
-            tweet_data.get('prediction', 0),
-            tweet_data.get('tweet_id'),
+            complaint_data.get('text', ''),
+            complaint_data.get('username', ''),
+            complaint_data.get('pnr'),
+            complaint_data.get('prediction', 0),
+            complaint_data.get('complaint_id'),
+            complaint_data.get('user_id'),
+            complaint_data.get('chat_id'),
+            'Telegram',
             datetime.now(),
             0  # response_status: 0 = not responded
         )
@@ -70,7 +75,7 @@ def save_tweet_to_db(tweet_data):
         cursor.close()
         return True
     except Exception as e:
-        print(f"Error saving tweet to database: {e}")
+        print(f"Error saving complaint to database: {e}")
         connection.rollback()
         return False
     finally:
@@ -82,22 +87,27 @@ def process_rdd(rdd):
         return
     
     # Create Spark session for this batch
-    spark = create_spark_session("LiveTweetProcessing")
+    spark = create_spark_session("LiveComplaintProcessing")
     
     try:
         # Convert RDD to DataFrame
-        tweet_schema = StructType([
-            StructField("tweet_id", LongType(), True),
+        # Schema matches Telegram message structure
+        complaint_schema = StructType([
+            StructField("complaint_id", LongType(), True),
             StructField("text", StringType(), True),
-            StructField("author_id", StringType(), True),
-            StructField("created_at", StringType(), True)
+            StructField("user_id", LongType(), True),
+            StructField("username", StringType(), True),
+            StructField("first_name", StringType(), True),
+            StructField("last_name", StringType(), True),
+            StructField("chat_id", LongType(), True),
+            StructField("timestamp", StringType(), True)
         ])
         
         # Parse JSON strings
         parsed_rdd = rdd.map(lambda x: json.loads(x[1]) if isinstance(x, tuple) else json.loads(x))
-        df = spark.createDataFrame(parsed_rdd, tweet_schema)
+        df = spark.createDataFrame(parsed_rdd, complaint_schema)
         
-        # Process tweets
+        # Process complaints
         df = df.withColumn("cleaned_text", clean_tweet_udf(col("text")))
         df = df.withColumn("pnr", extract_pnr_udf(col("text")))
         df = df.withColumn("prediction", classify_urgency_udf(col("cleaned_text")))
@@ -106,19 +116,23 @@ def process_rdd(rdd):
         rows = df.collect()
         
         for row in rows:
-            tweet_data = {
-                'tweet': row.text,
-                'username': row.author_id or 'unknown',
+            complaint_data = {
+                'text': row.text,
+                'username': row.username or f"user_{row.user_id}",
                 'pnr': row.pnr,
                 'prediction': row.prediction,
-                'tweet_id': row.tweet_id
+                'complaint_id': row.complaint_id,
+                'user_id': row.user_id,
+                'chat_id': row.chat_id
             }
             
-            save_tweet_to_db(tweet_data)
-            print(f"Processed tweet {row.tweet_id}: Prediction = {row.prediction}")
+            save_complaint_to_db(complaint_data)
+            print(f"Processed complaint {row.complaint_id}: Prediction = {row.prediction} ({'Emergency' if row.prediction == 1 else 'Feedback'})")
     
     except Exception as e:
         print(f"Error processing RDD: {e}")
+        import traceback
+        traceback.print_exc()
     finally:
         spark.stop()
 
@@ -126,21 +140,22 @@ def main():
     """Main streaming function"""
     
     # Spark configuration
-    spark = create_spark_session("LiveTweetStreaming")
+    spark = create_spark_session("LiveComplaintStreaming")
     ssc = StreamingContext(spark.sparkContext, batchDuration=10)  # 10 second batches
     
     # Kafka configuration
     kafka_brokers = os.getenv('KAFKA_BROKERS', 'localhost:9092')
-    kafka_topic = os.getenv('KAFKA_TOPIC', 'twitterstream')
+    kafka_topic = os.getenv('KAFKA_TOPIC', 'raw_tweets')
     
     print(f"Connecting to Kafka: {kafka_brokers}")
     print(f"Topic: {kafka_topic}")
+    print("Processing Telegram complaints...")
     
     # Create Kafka stream
     kafka_stream = KafkaUtils.createStream(
         ssc,
         zookeeper_quorum='localhost:2181',
-        group_id='tweet_processor',
+        group_id='complaint_processor',
         topics={kafka_topic: 1}
     )
     

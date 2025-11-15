@@ -4,23 +4,28 @@
 CREATE DATABASE IF NOT EXISTS twitter;
 USE twitter;
 
--- Tweets table
+-- Complaints table (renamed from tweets for clarity, but keeping table name for compatibility)
 CREATE TABLE IF NOT EXISTS tweets (
     id int AUTO_INCREMENT PRIMARY KEY,
-    tweet varchar(280) NOT NULL,
-    username varchar(50),
+    tweet varchar(500) NOT NULL COMMENT 'Complaint text from Telegram',
+    username varchar(50) COMMENT 'Telegram username',
     pnr bigint(10),
     prediction int(1) DEFAULT 0 COMMENT '0=Feedback, 1=Emergency',
-    tweet_id bigint(10) UNIQUE,
+    tweet_id bigint(10) UNIQUE COMMENT 'Telegram message ID',
+    user_id bigint(20) COMMENT 'Telegram user ID',
+    chat_id bigint(20) COMMENT 'Telegram chat ID',
+    source varchar(20) DEFAULT 'Telegram' COMMENT 'Source of complaint',
     latitude decimal(10,8),
     longitude decimal(11,8),
     time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     response_status int(1) DEFAULT 0 COMMENT '0=Not Responded, 1=Responded',
-    response varchar(280),
+    response varchar(500),
     INDEX idx_prediction (prediction),
     INDEX idx_response_status (response_status),
     INDEX idx_time (time),
-    INDEX idx_tweet_id (tweet_id)
+    INDEX idx_tweet_id (tweet_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_source (source)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Admin table

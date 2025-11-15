@@ -1,10 +1,10 @@
-# Real Time Indian Railways Twitter Complaint Administration System
+# Real Time Indian Railways Telegram Complaint Administration System
 
-Automated Real-Time classification of Indian Railways tweets into emergency and feedback using Apache Spark, Kafka, MySQL and PHP. The complete cluster is deployed on AWS EC2 and it uses AWS RDS for database operations.
+Automated Real-Time classification of Indian Railways complaints received via Telegram Bot into emergency and feedback using Apache Spark, Kafka, MySQL and PHP. The complete cluster is deployed on AWS EC2 and it uses AWS RDS for database operations.
 
 ## Project Overview
 
-This system processes real-time Twitter complaints about Indian Railways, classifies them into emergency and feedback categories, and provides an interactive web interface for administrators to manage and respond to complaints.
+This system processes real-time complaints from Telegram users about Indian Railways, classifies them into emergency and feedback categories, and provides an interactive web interface for administrators to manage and respond to complaints via Telegram.
 
 ## Technology Stack
 
@@ -13,19 +13,19 @@ This system processes real-time Twitter complaints about Indian Railways, classi
 - **Web Interface**: PHP, HTML, CSS, Bootstrap, jQuery, JavaScript, AJAX
 - **Machine Learning**: Python (scikit-learn, Spark MLlib)
 - **Deployment**: AWS EC2, AWS RDS
-- **Twitter API**: For streaming and responding to tweets
+- **Telegram Bot API**: For receiving complaints and sending responses
 
 ## Project Structure
 
 ```
 RailSewa-FinalYearProject/
-├── kafka_file/          # Kafka streaming scripts
+├── kafka_file/          # Kafka streaming scripts (Telegram Bot)
 ├── railways/            # PHP web interface
-├── parsing_raw_tweets/  # Tweet parsing utilities
+├── parsing_raw_tweets/  # Complaint parsing utilities
 ├── saved_model/         # Trained ML models
 ├── data/                # Training data and datasets
 ├── assets/              # Static assets (CSS, JS, images)
-├── live_processing.py   # Live tweet processing
+├── live_processing.py   # Live complaint processing
 ├── new_live_processing.py  # Updated live processing
 ├── train_model.py       # Model training script
 ├── sparksupport.py      # Spark utility functions
@@ -40,7 +40,7 @@ RailSewa-FinalYearProject/
 - Apache Kafka & Zookeeper
 - MySQL (AWS RDS)
 - XAMPP server
-- Twitter API credentials
+- Telegram Bot Token (from BotFather)
 
 ### AWS Setup
 1. Launch EC2 instances (master, slave1, slave2, xampp server)
@@ -48,10 +48,12 @@ RailSewa-FinalYearProject/
 3. Configure SSH communication between instances
 4. Setup Spark cluster (minimum 3 nodes)
 
-### Twitter API Setup
-- Get Access Token
-- Get Consumer Token
-- Get API Keys and Secrets
+### Telegram Bot Setup
+1. Open Telegram and search for **@BotFather**
+2. Send `/newbot` command
+3. Follow instructions to create a bot
+4. Copy the Bot Token provided
+5. Add token to `.env` file as `TELEGRAM_BOT_TOKEN`
 
 ## Installation
 
@@ -176,13 +178,18 @@ This will install the TwitterOAuth library required for posting responses to Twi
 
 ## Configuration
 
-### Twitter API Credentials
+### Telegram Bot Configuration
 
-Update `kafka_file/stream_data.py` with your Twitter API credentials:
-- Consumer Key
-- Consumer Secret
-- Access Token
-- Access Token Secret
+Update `.env` file with your Telegram Bot Token:
+```bash
+TELEGRAM_BOT_TOKEN=your_bot_token_from_botfather
+```
+
+To get a bot token:
+1. Open Telegram → Search for @BotFather
+2. Send `/newbot` command
+3. Follow instructions
+4. Copy the token provided
 
 ### Database Configuration
 
@@ -192,20 +199,23 @@ Update database connection details in:
 
 ## Usage
 
-1. The system automatically streams tweets mentioning Indian Railways
-2. Tweets are classified as emergency (1) or feedback (0)
-3. Administrators can view and respond to tweets via the web interface
-4. Responses are automatically posted back to Twitter
+1. Users send complaints to your Telegram Bot
+2. Complaints are automatically sent to Kafka for processing
+3. Spark classifies complaints as emergency (1) or feedback (0)
+4. Complaints are stored in MySQL database
+5. Administrators can view and respond to complaints via the web interface
+6. Responses are automatically sent back to users via Telegram
 
 ## Features
 
-- Real-time tweet streaming from Twitter API
+- Real-time complaint reception via Telegram Bot
 - Automatic classification using ML models
 - Interactive web dashboard for administrators
-- Automated response system
-- PNR extraction from tweets
-- Location tracking (latitude/longitude)
+- Automated response system via Telegram
+- PNR extraction from complaints
+- Location tracking (latitude/longitude) - optional
 - Historical data analysis
+- User-friendly Telegram interface
 
 ## License
 
@@ -219,5 +229,5 @@ PRs and Issues are welcome!
 
 - Apache Spark Community
 - Apache Kafka Community
-- Twitter API
+- Telegram Bot API
 

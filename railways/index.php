@@ -20,42 +20,42 @@ if (isset($_POST['action'])) {
             }
             
             $result = $conn->query($query);
-            $tweets = [];
+            $complaints = [];
             
             while ($row = $result->fetch_assoc()) {
-                $tweets[] = $row;
+                $complaints[] = $row;
             }
             
-            echo json_encode($tweets);
+            echo json_encode($complaints);
             exit;
             
         case 'respond_tweet':
-            $tweet_id = intval($_POST['tweet_id']);
+            $complaint_id = intval($_POST['tweet_id']);
             $response = mysqli_real_escape_string($conn, $_POST['response']);
             
             // Update response in database
-            $update_query = "UPDATE tweets SET response = '$response', response_status = 1 WHERE id = $tweet_id";
+            $update_query = "UPDATE tweets SET response = '$response', response_status = 1 WHERE id = $complaint_id";
             
             if ($conn->query($update_query)) {
-                // Post response to Twitter API
-                require_once 'twitter_api.php';
-                $twitter = new TwitterAPI();
+                // Send response via Telegram Bot
+                require_once 'telegram_api.php';
+                $telegram = new TelegramAPI();
                 
-                // Get tweet_id from database
-                $tweet_query = "SELECT tweet_id FROM tweets WHERE id = $tweet_id";
-                $tweet_result = $conn->query($tweet_query);
-                if ($tweet_result && $row = $tweet_result->fetch_assoc()) {
-                    $original_tweet_id = $row['tweet_id'];
-                    if ($original_tweet_id) {
-                        $twitter_result = $twitter->replyToTweet($original_tweet_id, $response);
-                        if ($twitter_result['status'] === 'error') {
-                            echo json_encode(['status' => 'warning', 'message' => 'Response saved but Twitter post failed: ' . $twitter_result['message']]);
+                // Get chat_id and message_id from database
+                $complaint_query = "SELECT chat_id, tweet_id FROM tweets WHERE id = $complaint_id";
+                $complaint_result = $conn->query($complaint_query);
+                if ($complaint_result && $row = $complaint_result->fetch_assoc()) {
+                    $chat_id = $row['chat_id'];
+                    if ($chat_id) {
+                        $telegram_result = $telegram->sendMessage($chat_id, $response);
+                        if ($telegram_result['status'] === 'error') {
+                            echo json_encode(['status' => 'warning', 'message' => 'Response saved but Telegram message failed: ' . $telegram_result['message']]);
                             exit;
                         }
                     }
                 }
                 
-                echo json_encode(['status' => 'success', 'message' => 'Response saved and posted to Twitter']);
+                echo json_encode(['status' => 'success', 'message' => 'Response saved and sent to user via Telegram']);
             } else {
                 echo json_encode(['status' => 'error', 'message' => $conn->error]);
             }
@@ -167,7 +167,7 @@ $conn->close();
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h5><i class="fas fa-list"></i> Recent Tweets</h5>
+                        <h5><i class="fas fa-list"></i> Recent Complaints</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -175,8 +175,8 @@ $conn->close();
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Tweet</th>
-                                        <th>Username</th>
+                                        <th>Complaint</th>
+                                        <th>Telegram User</th>
                                         <th>PNR</th>
                                         <th>Type</th>
                                         <th>Time</th>
@@ -186,7 +186,7 @@ $conn->close();
                                 </thead>
                                 <tbody id="tweets-tbody">
                                     <tr>
-                                        <td colspan="8" class="text-center">Loading tweets...</td>
+                                        <td colspan="8" class="text-center">Loading complaints...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -202,18 +202,18 @@ $conn->close();
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Respond to Tweet</h5>
+                    <h5 class="modal-title">Respond to Complaint</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Tweet:</label>
+                        <label class="form-label">Complaint:</label>
                         <p id="modal-tweet-text" class="border p-2"></p>
                     </div>
                     <div class="mb-3">
                         <label for="response-text" class="form-label">Your Response:</label>
-                        <textarea class="form-control" id="response-text" rows="3" maxlength="280"></textarea>
-                        <small class="text-muted"><span id="char-count">0</span>/280 characters</small>
+                        <textarea class="form-control" id="response-text" rows="3" maxlength="500"></textarea>
+                        <small class="text-muted"><span id="char-count">0</span>/500 characters</small>
                     </div>
                     <input type="hidden" id="modal-tweet-id">
                 </div>

@@ -1,7 +1,7 @@
 # Core dependencies (using compatible versions for Python 3.13)
 pyspark>=3.3.0
 kafka-python>=2.0.2
-tweepy>=4.14.0
+python-telegram-bot>=20.0
 pymysql>=1.1.0
 mysql-connector-python>=8.1.0
 

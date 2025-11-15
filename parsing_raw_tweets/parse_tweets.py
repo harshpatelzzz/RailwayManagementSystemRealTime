@@ -1,6 +1,6 @@
 """
-Parse Raw Tweets
-Utility script for parsing and cleaning raw tweet data
+Parse Raw Complaints
+Utility script for parsing and cleaning raw complaint data from Telegram
 """
 
 import json
@@ -74,9 +74,9 @@ def classify_tweet(text):
     
     return 0
 
-def format_tweet_data(raw_tweet):
-    """Format raw tweet data into structured format"""
-    parsed = parse_tweet_json(raw_tweet)
+def format_complaint_data(raw_complaint):
+    """Format raw complaint data from Telegram into structured format"""
+    parsed = parse_tweet_json(raw_complaint)
     
     if not parsed:
         return None
@@ -87,26 +87,30 @@ def format_tweet_data(raw_tweet):
     prediction = classify_tweet(cleaned_text)
     
     return {
-        'tweet_id': parsed.get('tweet_id') or parsed.get('id'),
+        'complaint_id': parsed.get('complaint_id') or parsed.get('id'),
         'text': text,
         'cleaned_text': cleaned_text,
-        'username': parsed.get('author_id') or parsed.get('username', 'unknown'),
+        'username': parsed.get('username', 'unknown'),
+        'user_id': parsed.get('user_id'),
+        'chat_id': parsed.get('chat_id'),
         'pnr': pnr,
         'prediction': prediction,
-        'created_at': parsed.get('created_at'),
+        'timestamp': parsed.get('timestamp'),
         'latitude': None,
         'longitude': None
     }
 
 if __name__ == "__main__":
     # Example usage
-    sample_tweet = {
-        "tweet_id": 1234567890,
+    sample_complaint = {
+        "complaint_id": 1234567890,
         "text": "Train 12345 is delayed. PNR: 1234567890. Need urgent help!",
-        "author_id": "user123",
-        "created_at": "2024-01-01T10:00:00Z"
+        "user_id": 123456789,
+        "username": "user123",
+        "chat_id": 123456789,
+        "timestamp": "2024-01-01T10:00:00Z"
     }
     
-    formatted = format_tweet_data(json.dumps(sample_tweet))
+    formatted = format_complaint_data(json.dumps(sample_complaint))
     print(json.dumps(formatted, indent=2))
 

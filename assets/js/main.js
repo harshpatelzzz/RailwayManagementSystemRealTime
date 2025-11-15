@@ -14,7 +14,7 @@ $(document).ready(function() {
         const length = $(this).val().length;
         $('#char-count').text(length);
         
-        if (length > 280) {
+        if (length > 500) {
             $('#char-count').css('color', '#dc3545');
         } else {
             $('#char-count').css('color', '#6c757d');
@@ -66,7 +66,7 @@ function loadTweets() {
         },
         error: function(xhr, status, error) {
             console.error('Error loading tweets:', error);
-            $('#tweets-tbody').html('<tr><td colspan="8" class="text-center text-danger">Error loading tweets</td></tr>');
+            $('#tweets-tbody').html('<tr><td colspan="8" class="text-center text-danger">Error loading complaints</td></tr>');
         }
     });
 }
@@ -75,44 +75,45 @@ function displayTweets(tweets) {
     const tbody = $('#tweets-tbody');
     
     if (tweets.length === 0) {
-        tbody.html('<tr><td colspan="8" class="text-center">No tweets found</td></tr>');
+        tbody.html('<tr><td colspan="8" class="text-center">No complaints found</td></tr>');
         return;
     }
     
     let html = '';
     
-    tweets.forEach(function(tweet) {
-        const typeBadge = tweet.prediction == 1 
-            ? '<span class="badge-emergency">Emergency</span>'
-            : '<span class="badge-feedback">Feedback</span>';
-        
-        const statusBadge = tweet.response_status == 1
-            ? '<span class="badge-responded">Responded</span>'
-            : '<span class="badge-pending">Pending</span>';
-        
-        const pnr = tweet.pnr ? tweet.pnr : '-';
-        const time = new Date(tweet.time).toLocaleString();
-        
-        html += `
-            <tr>
-                <td>${tweet.id}</td>
-                <td class="tweet-text">${escapeHtml(tweet.tweet)}</td>
-                <td>${escapeHtml(tweet.username || 'Unknown')}</td>
-                <td>${pnr}</td>
-                <td>${typeBadge}</td>
-                <td>${time}</td>
-                <td>${statusBadge}</td>
-                <td>
-                    ${tweet.response_status == 0 
-                        ? `<button class="btn btn-sm btn-primary btn-action" onclick="openResponseModal(${tweet.id}, '${escapeHtml(tweet.tweet)}')">
-                            <i class="fas fa-reply"></i> Respond
-                           </button>`
-                        : `<span class="text-muted">${escapeHtml(tweet.response || 'No response')}</span>`
-                    }
-                </td>
-            </tr>
-        `;
-    });
+        tweets.forEach(function(complaint) {
+            const typeBadge = complaint.prediction == 1 
+                ? '<span class="badge-emergency">Emergency</span>'
+                : '<span class="badge-feedback">Feedback</span>';
+            
+            const statusBadge = complaint.response_status == 1
+                ? '<span class="badge-responded">Responded</span>'
+                : '<span class="badge-pending">Pending</span>';
+            
+            const pnr = complaint.pnr ? complaint.pnr : '-';
+            const time = new Date(complaint.time).toLocaleString();
+            const source = complaint.source || 'Telegram';
+            
+            html += `
+                <tr>
+                    <td>${complaint.id}</td>
+                    <td class="tweet-text">${escapeHtml(complaint.tweet)}</td>
+                    <td>${escapeHtml(complaint.username || 'Unknown')} <small class="text-muted">(${source})</small></td>
+                    <td>${pnr}</td>
+                    <td>${typeBadge}</td>
+                    <td>${time}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        ${complaint.response_status == 0 
+                            ? `<button class="btn btn-sm btn-primary btn-action" onclick="openResponseModal(${complaint.id}, '${escapeHtml(complaint.tweet)}')">
+                                <i class="fas fa-reply"></i> Respond
+                               </button>`
+                            : `<span class="text-muted">${escapeHtml(complaint.response || 'No response')}</span>`
+                        }
+                    </td>
+                </tr>
+            `;
+        });
     
     tbody.html(html);
 }
@@ -151,8 +152,8 @@ function submitResponse() {
         return;
     }
     
-    if (response.length > 280) {
-        alert('Response cannot exceed 280 characters');
+    if (response.length > 500) {
+        alert('Response cannot exceed 500 characters');
         return;
     }
     

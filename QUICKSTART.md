@@ -7,7 +7,7 @@
 - [ ] Apache Kafka & Zookeeper installed
 - [ ] MySQL database (AWS RDS or local)
 - [ ] XAMPP server (for web interface)
-- [ ] Twitter API credentials
+- [ ] Telegram Bot Token (from BotFather)
 
 ## Step-by-Step Setup
 
@@ -26,7 +26,7 @@ pip install -r requirements.txt
 Edit `.env` file with your credentials:
 - Database connection details
 - Kafka broker addresses
-- Twitter API keys
+- Telegram Bot Token
 
 ### 3. Setup Database
 
@@ -73,12 +73,18 @@ cd kafka
 bin/kafka-console-consumer.sh --bootstrap-server localhost:2181 --topic twitterstream --from-beginning &
 ```
 
-### 7. Start Twitter Streaming
+### 7. Start Telegram Bot
 
 On master:
 ```bash
-python kafka_file/stream_data.py &
+python kafka_file/telegram_stream.py &
 ```
+
+**To get Telegram Bot Token:**
+1. Open Telegram → Search for @BotFather
+2. Send `/newbot` command
+3. Follow instructions to create bot
+4. Copy the token and add to `.env` file
 
 ### 8. Train Model (One-time)
 
@@ -119,10 +125,11 @@ Open browser:
 - Check security group allows connections
 - Test connection: `mysql -h endpoint -u user -p`
 
-### Twitter API Issues
-- Verify API credentials in `.env`
-- Check rate limits
-- Ensure Twitter Developer account is active
+### Telegram Bot Issues
+- Verify Bot Token in `.env`
+- Check bot is running: `ps aux | grep telegram_stream.py`
+- Ensure bot token is correct (from @BotFather)
+- Test bot by sending a message to it
 
 ### Spark Issues
 - Verify Spark cluster is running
@@ -131,11 +138,15 @@ Open browser:
 
 ## Testing
 
-### Test Twitter Streaming
+### Test Telegram Bot
 ```bash
-# Check Kafka topic
+# Check if bot is running
+ps aux | grep telegram_stream.py
+
+# Test by sending a message to your Telegram bot
+# Then check Kafka topic
 cd kafka
-bin/kafka-console-consumer.sh --bootstrap-server localhost:2181 --topic twitterstream --from-beginning
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic raw_tweets --from-beginning
 ```
 
 ### Test Database

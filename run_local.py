@@ -14,11 +14,11 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-class LocalTweetProcessor:
-    """Local tweet processor that simulates the full system"""
+class LocalComplaintProcessor:
+    """Local complaint processor that simulates the full system"""
     
     def __init__(self):
-        self.tweets = []
+        self.complaints = []
         self.stats = {
             'total': 0,
             'emergency': 0,
@@ -26,29 +26,30 @@ class LocalTweetProcessor:
             'processed': 0
         }
     
-    def process_tweet(self, tweet_text, username="test_user", tweet_id=None):
-        """Process a single tweet"""
-        if tweet_id is None:
-            tweet_id = int(time.time() * 1000)  # Generate ID
+    def process_complaint(self, complaint_text, username="test_user", complaint_id=None):
+        """Process a single complaint"""
+        if complaint_id is None:
+            complaint_id = int(time.time() * 1000)  # Generate ID
         
         # Clean and process
-        cleaned = clean_tweet(tweet_text)
-        pnr = extract_pnr(tweet_text)
+        cleaned = clean_tweet(complaint_text)
+        pnr = extract_pnr(complaint_text)
         prediction = classify_urgency(cleaned)
-        tweet_type = "Emergency" if prediction == 1 else "Feedback"
+        complaint_type = "Emergency" if prediction == 1 else "Feedback"
         
-        # Create tweet record
-        tweet_data = {
-            'id': len(self.tweets) + 1,
-            'tweet_id': tweet_id,
-            'tweet': tweet_text,
+        # Create complaint record
+        complaint_data = {
+            'id': len(self.complaints) + 1,
+            'tweet_id': complaint_id,
+            'tweet': complaint_text,
             'cleaned_tweet': cleaned,
             'username': username,
             'pnr': pnr,
             'prediction': prediction,
-            'type': tweet_type,
+            'type': complaint_type,
             'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            'response_status': 0
+            'response_status': 0,
+            'source': 'Telegram'
         }
         
         # Update stats
@@ -59,40 +60,40 @@ class LocalTweetProcessor:
             self.stats['feedback'] += 1
         self.stats['processed'] += 1
         
-        # Store tweet
-        self.tweets.append(tweet_data)
+        # Store complaint
+        self.complaints.append(complaint_data)
         
-        return tweet_data
+        return complaint_data
     
     def get_stats(self):
         """Get processing statistics"""
         return self.stats.copy()
     
-    def get_tweets(self, filter_type='all', limit=10):
-        """Get tweets with optional filtering"""
-        tweets = self.tweets.copy()
+    def get_complaints(self, filter_type='all', limit=10):
+        """Get complaints with optional filtering"""
+        complaints = self.complaints.copy()
         
         if filter_type == 'emergency':
-            tweets = [t for t in tweets if t['prediction'] == 1]
+            complaints = [c for c in complaints if c['prediction'] == 1]
         elif filter_type == 'feedback':
-            tweets = [t for t in tweets if t['prediction'] == 0]
+            complaints = [c for c in complaints if c['prediction'] == 0]
         
         # Sort by time (newest first) and limit
-        tweets.sort(key=lambda x: x['time'], reverse=True)
-        return tweets[:limit]
+        complaints.sort(key=lambda x: x['time'], reverse=True)
+        return complaints[:limit]
     
-    def respond_to_tweet(self, tweet_id, response):
-        """Simulate responding to a tweet"""
-        for tweet in self.tweets:
-            if tweet['id'] == tweet_id:
-                tweet['response'] = response
-                tweet['response_status'] = 1
+    def respond_to_complaint(self, complaint_id, response):
+        """Simulate responding to a complaint"""
+        for complaint in self.complaints:
+            if complaint['id'] == complaint_id:
+                complaint['response'] = response
+                complaint['response_status'] = 1
                 return True
         return False
 
-def simulate_twitter_stream(processor, num_tweets=10):
-    """Simulate incoming tweets"""
-    sample_tweets = [
+def simulate_telegram_bot(processor, num_complaints=10):
+    """Simulate incoming complaints via Telegram Bot"""
+    sample_complaints = [
         ("Train 12345 is delayed by 2 hours! PNR: 1234567890 Urgent help needed @RailMinIndia", "user1"),
         ("Great service on Indian Railways! Comfortable journey, clean coaches.", "user2"),
         ("Medical emergency in coach S3. Need immediate assistance. PNR: 9876543210", "user3"),
@@ -108,11 +109,11 @@ def simulate_twitter_stream(processor, num_tweets=10):
     print("=" * 70)
     print("RailSewa - Local System Runner")
     print("=" * 70)
-    print(f"\nSimulating Twitter stream with {num_tweets} tweets...\n")
+    print(f"\nSimulating Telegram Bot with {num_complaints} complaints...\n")
     
-    for i, (tweet_text, username) in enumerate(sample_tweets[:num_tweets], 1):
-        print(f"Processing Tweet {i}/{num_tweets}...")
-        result = processor.process_tweet(tweet_text, username)
+    for i, (complaint_text, username) in enumerate(sample_complaints[:num_complaints], 1):
+        print(f"Processing Complaint {i}/{num_complaints}...")
+        result = processor.process_complaint(complaint_text, username)
         
         print(f"  User: {result['username']}")
         print(f"  Text: {result['tweet'][:60]}...")
@@ -127,27 +128,27 @@ def simulate_twitter_stream(processor, num_tweets=10):
 def display_dashboard(processor):
     """Display a simple dashboard"""
     stats = processor.get_stats()
-    tweets = processor.get_tweets(limit=5)
+    complaints = processor.get_complaints(limit=5)
     
     print("=" * 70)
     print("DASHBOARD - Real-time Statistics")
     print("=" * 70)
-    print(f"\nTotal Tweets Processed: {stats['total']}")
-    print(f"Emergency Tweets:       {stats['emergency']}")
-    print(f"Feedback Tweets:        {stats['feedback']}")
-    print(f"Processing Rate:        {stats['processed']} tweets")
+    print(f"\nTotal Complaints Processed: {stats['total']}")
+    print(f"Emergency Complaints:       {stats['emergency']}")
+    print(f"Feedback Complaints:        {stats['feedback']}")
+    print(f"Processing Rate:            {stats['processed']} complaints")
     
     print("\n" + "-" * 70)
-    print("Recent Tweets (Last 5)")
+    print("Recent Complaints (Last 5)")
     print("-" * 70)
     
-    for tweet in tweets:
-        type_badge = "[EMERGENCY]" if tweet['prediction'] == 1 else "[FEEDBACK]"
-        pnr_info = f"PNR: {tweet['pnr']}" if tweet['pnr'] else "No PNR"
+    for complaint in complaints:
+        type_badge = "[EMERGENCY]" if complaint['prediction'] == 1 else "[FEEDBACK]"
+        pnr_info = f"PNR: {complaint['pnr']}" if complaint['pnr'] else "No PNR"
         
-        print(f"\n[{tweet['id']}] {type_badge} - {tweet['time']}")
-        print(f"  User: {tweet['username']}")
-        print(f"  Text: {tweet['tweet'][:70]}...")
+        print(f"\n[{complaint['id']}] {type_badge} - {complaint['time']}")
+        print(f"  User: {complaint['username']} (Telegram)")
+        print(f"  Text: {complaint['tweet'][:70]}...")
         print(f"  {pnr_info}")
 
 def interactive_mode(processor):
@@ -157,9 +158,9 @@ def interactive_mode(processor):
     print("=" * 70)
     print("\nCommands:")
     print("  'stats' - Show statistics")
-    print("  'tweets [all|emergency|feedback]' - Show tweets")
-    print("  'process <tweet_text>' - Process a new tweet")
-    print("  'respond <id> <response>' - Respond to a tweet")
+    print("  'complaints [all|emergency|feedback]' - Show complaints")
+    print("  'process <complaint_text>' - Process a new complaint")
+    print("  'respond <id> <response>' - Respond to a complaint")
     print("  'quit' - Exit")
     print()
     
@@ -178,29 +179,29 @@ def interactive_mode(processor):
                 print(f"  Total: {stats['total']}")
                 print(f"  Emergency: {stats['emergency']}")
                 print(f"  Feedback: {stats['feedback']}")
-            elif command.startswith('tweets'):
+            elif command.startswith('complaints'):
                 parts = command.split()
                 filter_type = parts[1] if len(parts) > 1 else 'all'
-                tweets = processor.get_tweets(filter_type=filter_type, limit=10)
-                print(f"\nShowing {len(tweets)} tweets (filter: {filter_type}):")
-                for tweet in tweets:
-                    type_badge = "[EMERGENCY]" if tweet['prediction'] == 1 else "[FEEDBACK]"
-                    print(f"  [{tweet['id']}] {type_badge} - {tweet['username']}: {tweet['tweet'][:50]}...")
+                complaints = processor.get_complaints(filter_type=filter_type, limit=10)
+                print(f"\nShowing {len(complaints)} complaints (filter: {filter_type}):")
+                for complaint in complaints:
+                    type_badge = "[EMERGENCY]" if complaint['prediction'] == 1 else "[FEEDBACK]"
+                    print(f"  [{complaint['id']}] {type_badge} - {complaint['username']}: {complaint['tweet'][:50]}...")
             elif command.startswith('process '):
-                tweet_text = command[8:]
-                result = processor.process_tweet(tweet_text)
-                print(f"\nProcessed tweet #{result['id']}:")
+                complaint_text = command[8:]
+                result = processor.process_complaint(complaint_text)
+                print(f"\nProcessed complaint #{result['id']}:")
                 print(f"  Type: {result['type']}")
                 print(f"  PNR: {result['pnr'] if result['pnr'] else 'Not found'}")
             elif command.startswith('respond '):
                 parts = command.split(' ', 2)
                 if len(parts) >= 3:
-                    tweet_id = int(parts[1])
+                    complaint_id = int(parts[1])
                     response = parts[2]
-                    if processor.respond_to_tweet(tweet_id, response):
-                        print(f"\nResponse added to tweet #{tweet_id}")
+                    if processor.respond_to_complaint(complaint_id, response):
+                        print(f"\nResponse added to complaint #{complaint_id}")
                     else:
-                        print(f"\nTweet #{tweet_id} not found")
+                        print(f"\nComplaint #{complaint_id} not found")
                 else:
                     print("Usage: respond <id> <response_text>")
             else:
@@ -213,7 +214,7 @@ def interactive_mode(processor):
 
 def main():
     """Main function"""
-    processor = LocalTweetProcessor()
+    processor = LocalComplaintProcessor()
     
     print("\n" + "=" * 70)
     print("RailSewa - Local System Runner")
@@ -222,12 +223,12 @@ def main():
     print("  - Kafka/Zookeeper")
     print("  - Spark cluster")
     print("  - MySQL database")
-    print("  - Twitter API")
+    print("  - Telegram Bot API")
     print("\nIt simulates the full workflow for testing purposes.")
     print()
     
     # Run simulation
-    processor = simulate_twitter_stream(processor, num_tweets=10)
+    processor = simulate_telegram_bot(processor, num_complaints=10)
     
     # Display dashboard
     display_dashboard(processor)
@@ -250,12 +251,12 @@ def print_summary(processor):
     print("\n" + "=" * 70)
     print("System Running Successfully!")
     print("=" * 70)
-    print("\nThe local system has processed tweets successfully.")
+    print("\nThe local system has processed complaints successfully.")
     print("\nTo run the full system with real infrastructure:")
     print("  1. Setup MySQL database (see database/schema.sql)")
     print("  2. Install and start Kafka/Zookeeper")
-    print("  3. Configure Twitter API credentials in .env")
-    print("  4. Run: python kafka_file/stream_data.py")
+    print("  3. Configure Telegram Bot Token in .env")
+    print("  4. Run: python kafka_file/telegram_stream.py")
     print("  5. Run: spark-submit new_live_processing.py")
     print("\nFor interactive mode, run: python run_local.py")
     print("See README.md or QUICKSTART.md for detailed instructions.")
