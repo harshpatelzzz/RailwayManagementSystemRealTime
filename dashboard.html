@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RailSewa - Railway Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --matte-black: #0a0a0a;
+            --matte-dark: #1a1a1a;
+            --matte-darker: #0f0f0f;
+            --accent-red: #ff3b3b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --text-primary: #e5e5e5;
+            --text-secondary: #9ca3af;
+            --border-color: #2a2a2a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--matte-black);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Railway Tracks Background */
+        .railway-tracks {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--matte-dark) 0px,
+                var(--matte-dark) 40px,
+                var(--border-color) 40px,
+                var(--border-color) 42px
+            );
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .railway-tracks::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--border-color);
+            transform: translateY(-50%);
+        }
+
+        /* Moving Train Animation */
+        .train-container {
+            position: fixed;
+            bottom: 100px;
+            left: -200px;
+            z-index: 1;
+            animation: trainMove 20s linear infinite;
+        }
+
+        .train {
+            width: 200px;
+            height: 60px;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .train::before {
+            content: '🚂';
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+        }
+
+        .train-windows {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .window {
+            width: 12px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+            animation: windowBlink 2s infinite;
+        }
+
+        @keyframes trainMove {
+            0% { left: -200px; }
+            100% { left: 100%; }
+        }
+
+        @keyframes windowBlink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Railway Signal */
+        .railway-signal {
+            position: fixed;
+            right: 50px;
+            top: 100px;
+            z-index: 1;
+            animation: signalBlink 3s infinite;
+        }
+
+        .signal-post {
+            width: 8px;
+            height: 80px;
+            background: var(--border-color);
+            margin: 0 auto;
+        }
+
+        .signal-light {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            box-shadow: 0 0 20px var(--accent-red);
+            margin: 10px auto;
+        }
+
+        @keyframes signalBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--matte-dark) !important;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .navbar-brand i {
+            color: var(--accent-red);
+            animation: trainIconMove 2s ease-in-out infinite;
+        }
+
+        @keyframes trainIconMove {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
+        /* Minimal Stat Cards */
+        .stat-card {
+            background: var(--matte-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--accent-color);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .stat-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card.primary { --accent-color: var(--accent-blue); }
+        .stat-card.danger { --accent-color: var(--accent-red); }
+        .stat-card.info { --accent-color: var(--accent-blue); }
+        .stat-card.success { --accent-color: var(--accent-green); }
+
+        .stat-card .card-title {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .stat-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2rem;
+            color: var(--accent-color);
+            opacity: 0.1;
+        }
+
+        /* Minimal Filter Buttons */
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            border: 1px solid var(--border-color);
+            background: var(--matte-dark);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+            background: var(--matte-darker);
+        }
+
+        .filter-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        /* Minimal Tweet Cards */
+        .tweet-card {
+            background: var(--matte-dark);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .tweet-card:hover {
+            border-left-color: var(--accent-color);
+            background: var(--matte-darker);
+        }
+
+        .tweet-card.emergency {
+            --accent-color: var(--accent-red);
+        }
+
+        .tweet-card.feedback {
+            --accent-color: var(--accent-blue);
+        }
+
+        .tweet-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .tweet-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-emergency {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .badge-feedback {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .tweet-user {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .tweet-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .tweet-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .tweet-meta i {
+            margin-right: 0.25rem;
+            color: var(--accent-blue);
+        }
+
+        /* Minimal Refresh Button */
+        .refresh-btn {
+            background: var(--matte-dark);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            transform: rotate(180deg);
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        /* Main Container */
+        .main-container {
+            position: relative;
+            z-index: 10;
+            padding: 2rem 0;
+        }
+
+        /* Station Platform Effect */
+        .station-platform {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            background: var(--matte-darker);
+            border-top: 1px solid var(--border-color);
+            z-index: 0;
+        }
+
+        /* Minimal Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--matte-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-blue);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stat-card h2 {
+                font-size: 2rem;
+            }
+            
+            .train-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Railway Tracks -->
+    <div class="railway-tracks"></div>
+    <div class="station-platform"></div>
+
+    <!-- Moving Train -->
+    <div class="train-container">
+        <div class="train">
+            <div class="train-windows">
+                <div class="window"></div>
+                <div class="window"></div>
+                <div class="window"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Railway Signal -->
+    <div class="railway-signal">
+        <div class="signal-light"></div>
+        <div class="signal-post"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fas fa-train"></i>
+                RailSewa
+            </span>
+            <button class="btn refresh-btn" onclick="loadSampleData()">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid main-container">
+        <!-- Statistics Cards -->
+        <div class="row mb-4" id="stats-container">
+            <div class="col-md-3 mb-3">
+                <div class="stat-card primary">
+                    <i class="fas fa-chart-line stat-icon"></i>
+                    <h6 class="card-title">Total Tweets</h6>
+                    <h2 id="stat-total" class="counter">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card danger">
+                    <i class="fas fa-exclamation-triangle stat-icon"></i>
+                    <h6 class="card-title">Emergency</h6>
+                    <h2 id="stat-emergency" class="counter">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card info">
+                    <i class="fas fa-comments stat-icon"></i>
+                    <h6 class="card-title">Feedback</h6>
+                    <h2 id="stat-feedback" class="counter">0</h2>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stat-card success">
+                    <i class="fas fa-check-circle stat-icon"></i>
+                    <h6 class="card-title">Processed</h6>
+                    <h2 id="stat-processed" class="counter">0</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex gap-2">
+                    <button class="filter-btn active" onclick="filterTweets('all')">
+                        All
+                    </button>
+                    <button class="filter-btn" onclick="filterTweets('emergency')">
+                        Emergency
+                    </button>
+                    <button class="filter-btn" onclick="filterTweets('feedback')">
+                        Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tweets Container -->
+        <div class="row">
+            <div class="col-12">
+                <div id="tweets-container">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h5>No tweets loaded</h5>
+                        <p>Click refresh to load sample data</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let allTweets = [];
+        let currentFilter = 'all';
+
+        // Sample data
+        const sampleTweets = [
+            {
+                id: 1,
+                tweet: "Train 12345 is delayed by 2 hours! PNR: 1234567890 Urgent help needed @RailMinIndia",
+                username: "user1",
+                pnr: 1234567890,
+                prediction: 1,
+                type: "Emergency",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 2,
+                tweet: "Great service on Indian Railways! Comfortable journey, clean coaches. Thank you!",
+                username: "user2",
+                pnr: null,
+                prediction: 0,
+                type: "Feedback",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 3,
+                tweet: "Medical emergency in coach S3. Need immediate assistance. PNR: 9876543210",
+                username: "user3",
+                pnr: 9876543210,
+                prediction: 1,
+                type: "Emergency",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 4,
+                tweet: "Excellent food quality and staff behavior. Keep up the good work!",
+                username: "user4",
+                pnr: null,
+                prediction: 0,
+                type: "Feedback",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 5,
+                tweet: "Train breakdown on track. Passengers stranded. PNR: 5555555555",
+                username: "user5",
+                pnr: 5555555555,
+                prediction: 1,
+                type: "Emergency",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 6,
+                tweet: "Thank you for the punctual service. Very satisfied with the journey.",
+                username: "user6",
+                pnr: null,
+                prediction: 0,
+                type: "Feedback",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 7,
+                tweet: "AC not working in coach A1. Very uncomfortable. PNR: 1111111111",
+                username: "user7",
+                pnr: 1111111111,
+                prediction: 0,
+                type: "Feedback",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 8,
+                tweet: "Clean washrooms and well-maintained stations. Great job!",
+                username: "user8",
+                pnr: null,
+                prediction: 0,
+                type: "Feedback",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 9,
+                tweet: "Train cancelled without notice. Need refund. PNR: 2222222222",
+                username: "user9",
+                pnr: 2222222222,
+                prediction: 1,
+                type: "Emergency",
+                time: new Date().toLocaleString()
+            },
+            {
+                id: 10,
+                tweet: "Smooth journey, on-time arrival. Highly recommend!",
+                username: "user10",
+                pnr: null,
+                prediction: 0,
+                type: "Feedback",
+                time: new Date().toLocaleString()
+            }
+        ];
+
+        // Animate counter
+        function animateCounter(element, target) {
+            const duration = 800;
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        function loadSampleData() {
+            $('#tweets-container').html('<div class="loading"><div class="spinner"></div></div>');
+            
+            setTimeout(() => {
+                allTweets = sampleTweets;
+                updateStats();
+                displayTweets();
+            }, 300);
+        }
+
+        function updateStats() {
+            const total = allTweets.length;
+            const emergency = allTweets.filter(t => t.prediction === 1).length;
+            const feedback = allTweets.filter(t => t.prediction === 0).length;
+
+            animateCounter(document.getElementById('stat-total'), total);
+            animateCounter(document.getElementById('stat-emergency'), emergency);
+            animateCounter(document.getElementById('stat-feedback'), feedback);
+            animateCounter(document.getElementById('stat-processed'), total);
+        }
+
+        function filterTweets(filter) {
+            currentFilter = filter;
+            
+            $('.filter-btn').removeClass('active');
+            if (filter === 'all') {
+                $('.filter-btn:first').addClass('active');
+            } else if (filter === 'emergency') {
+                $('.filter-btn:nth-child(2)').addClass('active');
+            } else {
+                $('.filter-btn:last').addClass('active');
+            }
+            
+            displayTweets();
+        }
+
+        function displayTweets() {
+            let tweets = allTweets;
+            
+            if (currentFilter === 'emergency') {
+                tweets = tweets.filter(t => t.prediction === 1);
+            } else if (currentFilter === 'feedback') {
+                tweets = tweets.filter(t => t.prediction === 0);
+            }
+            
+            const container = $('#tweets-container');
+            
+            if (tweets.length === 0) {
+                container.html(`
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h5>No tweets found</h5>
+                    </div>
+                `);
+                return;
+            }
+            
+            let html = '';
+            tweets.forEach((tweet, index) => {
+                const typeClass = tweet.prediction === 1 ? 'emergency' : 'feedback';
+                const badge = tweet.prediction === 1 
+                    ? '<span class="tweet-badge badge-emergency">Emergency</span>'
+                    : '<span class="tweet-badge badge-feedback">Feedback</span>';
+                
+                html += `
+                    <div class="tweet-card ${typeClass}" style="animation-delay: ${index * 0.05}s">
+                        <div class="tweet-header">
+                            ${badge}
+                            <div class="tweet-user">
+                                <i class="fas fa-user"></i>
+                                <span>@${tweet.username}</span>
+                            </div>
+                        </div>
+                        <div class="tweet-content">
+                            ${escapeHtml(tweet.tweet)}
+                        </div>
+                        <div class="tweet-meta">
+                            ${tweet.pnr ? `<span><i class="fas fa-ticket-alt"></i>PNR: ${tweet.pnr}</span>` : ''}
+                            <span><i class="fas fa-clock"></i>${tweet.time}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.html(html);
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
+        }
+
+        // Initialize
+        $(document).ready(function() {
+            loadSampleData();
+        });
+    </script>
+</body>
+</html>
