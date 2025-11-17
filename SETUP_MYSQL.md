@@ -10,18 +10,189 @@ This guide will help you set up MySQL database for RailSewa project. You can use
 
 ## ☁️ AWS RDS Setup
 
-### **Step 1: Verify RDS Instance**
+### **📋 Quick Overview**
 
-1. Go to **AWS Console** → **RDS**
-2. Find your database instance
-3. Verify status is **"Available"**
-4. Copy your endpoint (e.g., `your-db.xxxxx.us-east-1.rds.amazonaws.com`)
-5. Note your master username (usually `admin`)
-6. Have your master password ready
+**Steps to set up AWS RDS MySQL:**
+1. Create RDS MySQL instance in AWS Console
+2. Configure security group to allow connections
+3. Test connection
+4. Create database (if not auto-created)
+5. Run schema to create tables
+6. Update `.env` file with credentials
+7. Test full connection
+
+**Estimated time:** 15-30 minutes  
+**Estimated cost:** Free tier eligible (or ~$15-30/month for small instance)
 
 ---
 
-### **Step 2: Configure Security Group**
+### **Step 1: Create RDS MySQL Instance**
+
+If you don't have an RDS instance yet, follow these steps to create one:
+
+#### **1.1: Navigate to RDS Console**
+
+1. Log in to **AWS Console**
+2. Search for **"RDS"** in the services search bar
+3. Click on **"RDS"** service
+4. Click **"Create database"** button
+
+#### **1.2: Choose Database Configuration**
+
+**Database creation method:**
+- Select **"Standard create"** (recommended for more control)
+
+**Engine options:**
+- **Engine type:** MySQL
+- **Version:** MySQL 8.0.x (or latest stable version)
+- **Templates:**
+  - For **development/testing:** Choose **"Free tier"** (if eligible)
+  - For **production:** Choose **"Production"** or **"Dev/Test"**
+
+#### **1.3: Settings**
+
+**DB instance identifier:**
+- Enter a unique name (e.g., `railsewa-db` or `twitter-db`)
+- Must be unique within your AWS account and region
+
+**Master username:**
+- Default: `admin` (recommended)
+- Or choose your own username
+
+**Master password:**
+- **⚠️ IMPORTANT:** Create a strong password
+- Must be 8-41 characters
+- Contains uppercase, lowercase, numbers, and special characters
+- **Save this password securely!** You'll need it to connect.
+
+**Confirm password:**
+- Re-enter the same password
+
+#### **1.4: Instance Configuration**
+
+**DB instance class:**
+- **Free tier:** `db.t3.micro` or `db.t2.micro` (1 vCPU, 1 GB RAM)
+- **Production:** `db.t3.small` or larger (based on your needs)
+- **Note:** Free tier is only available for new AWS accounts for 12 months
+
+**Storage:**
+- **Storage type:** General Purpose SSD (gp3) - recommended
+- **Allocated storage:** 20 GB (minimum, increase for production)
+- **Storage autoscaling:** Enable if you expect growth
+- **Maximum storage threshold:** 100 GB (adjust as needed)
+
+#### **1.5: Connectivity**
+
+**Virtual Private Cloud (VPC):**
+- Select your VPC (default VPC is fine for testing)
+
+**Subnet group:**
+- Use default subnet group (or create custom if needed)
+
+**Public access:**
+- **For development/testing:** Choose **"Yes"** (allows connection from your local machine)
+- **For production:** Choose **"No"** (only accessible from within VPC)
+
+**VPC security group:**
+- Choose **"Create new"** (recommended for first-time setup)
+- Name: `railsewa-rds-sg` (or your preferred name)
+
+**Availability Zone:**
+- Leave as **"No preference"** (or choose specific zone)
+
+**Port:**
+- Default: **3306** (MySQL standard port)
+
+#### **1.6: Database Authentication**
+
+- Choose **"Password authentication"** (default)
+
+#### **1.7: Additional Configuration (Optional but Recommended)**
+
+**Initial database name:**
+- Enter: `twitter` (this creates the database automatically)
+- Or leave blank and create it later
+
+**DB parameter group:**
+- Use default (or create custom if needed)
+
+**Backup:**
+- **Automated backups:** Enable (recommended)
+- **Backup retention period:** 7 days (adjust as needed)
+- **Backup window:** Leave default or choose off-peak hours
+
+**Encryption:**
+- **Enable encryption:** Recommended for production
+- **Encryption key:** Use default AWS managed key
+
+**Monitoring:**
+- **Enable Enhanced monitoring:** Optional (has additional cost)
+- **Log exports:** Enable **"Error log"** and **"General log"** for debugging
+
+**Maintenance:**
+- **Auto minor version upgrade:** Enable (recommended)
+- **Maintenance window:** Choose off-peak hours
+
+#### **1.8: Review and Create**
+
+1. Review all settings
+2. **Estimated monthly costs** will be shown (check if within budget)
+3. Click **"Create database"** button
+
+#### **1.9: Wait for Database Creation**
+
+- Creation takes **5-15 minutes**
+- Status will show: **"Creating"** → **"Available"**
+- **⚠️ Don't close the browser!** Wait for status to be **"Available"**
+- You can refresh the page to check status
+- You'll receive an email notification when it's ready (if configured)
+
+#### **1.10: Save Connection Details**
+
+Once status is **"Available"**, note down:
+
+- **Endpoint:** `your-db.xxxxx.us-east-1.rds.amazonaws.com` (click on instance name to see)
+- **Port:** `3306`
+- **Master username:** `admin` (or what you set)
+- **Master password:** (the one you created)
+- **Database name:** `twitter` (if you set it, or create later)
+
+**Example endpoint format:**
+```
+railsewa-db.abc123xyz.us-east-1.rds.amazonaws.com
+```
+
+#### **💡 Cost-Saving Tips**
+
+- **Use Free Tier:** If eligible, use `db.t3.micro` or `db.t2.micro` (free for 12 months)
+- **Stop when not in use:** For development, you can stop the instance when not needed (saves ~70% cost)
+- **Choose right region:** Some regions have lower costs
+- **Monitor usage:** Set up billing alerts to avoid surprises
+- **Delete test instances:** Don't forget to delete instances you're not using
+
+#### **⚠️ Important Notes**
+
+- **Free Tier Eligibility:** Only available for accounts less than 12 months old
+- **Stopping vs Deleting:** 
+  - **Stop:** Instance is paused, you pay for storage only (~$2-3/month)
+  - **Delete:** Instance is removed, no charges (but data is lost!)
+- **Backup Costs:** Automated backups have storage costs (~$0.095/GB/month)
+- **Data Transfer:** First 100 GB/month is free, then charges apply
+
+---
+
+### **Step 2: Verify RDS Instance**
+
+1. Go to **AWS Console** → **RDS**
+2. Find your database instance (should show **"Available"** status)
+3. Click on the instance name
+4. Copy your **endpoint** from the **"Connectivity & security"** tab
+5. Verify **master username** (usually `admin`)
+6. Have your **master password** ready
+
+---
+
+### **Step 3: Configure Security Group**
 
 **IMPORTANT:** Before connecting, allow access to RDS:
 
@@ -39,7 +210,7 @@ This guide will help you set up MySQL database for RailSewa project. You can use
 
 ---
 
-### **Step 3: Test Connection**
+### **Step 4: Test Connection**
 
 #### **Option A: From AWS EC2 Instance**
 
@@ -76,7 +247,7 @@ mysql -h your-endpoint.rds.amazonaws.com -u admin -p -e "SELECT VERSION();"
 
 ---
 
-### **Step 4: Create Database (if not exists)**
+### **Step 5: Create Database (if not exists)**
 
 If the `twitter` database doesn't exist, create it:
 
@@ -93,7 +264,7 @@ USE twitter;
 
 ---
 
-### **Step 5: Verify Database**
+### **Step 6: Verify Database**
 
 ```bash
 mysql -h your-endpoint.rds.amazonaws.com -u admin -p -e "SHOW DATABASES;"
@@ -103,7 +274,7 @@ You should see `twitter` in the list.
 
 ---
 
-### **Step 6: Get Schema File Ready**
+### **Step 7: Get Schema File Ready**
 
 Make sure you have the schema file. It should be at: `database/schema.sql`
 
@@ -121,7 +292,7 @@ cd your-repo
 
 ---
 
-## 🚀 Step 7: Run Database Schema
+## 🚀 Step 8: Run Database Schema
 
 This will create all necessary tables (`tweets`, `admin`) and indexes.
 
@@ -237,7 +408,7 @@ python run_schema.py
 
 ---
 
-## 📝 Step 8: Update .env File
+## 📝 Step 9: Update .env File
 
 Update your `.env` file with your RDS credentials:
 
@@ -262,7 +433,7 @@ DB_NAME=twitter
 
 ---
 
-## ✅ Step 9: Verify Tables Created
+## ✅ Step 10: Verify Tables Created
 
 ### **From Command Line:**
 ```bash
@@ -286,7 +457,7 @@ mysql -h your-endpoint.rds.amazonaws.com -u admin -p twitter -e "DESCRIBE tweets
 
 ---
 
-## 🧪 Step 10: Test Database Connection
+## 🧪 Step 11: Test Database Connection
 
 ### **Using Python Test Script**
 
@@ -450,6 +621,34 @@ After completing all steps:
 ---
 
 ## 🆘 Troubleshooting
+
+### **RDS Creation Failed?**
+
+**Common issues during creation:**
+
+1. **"Insufficient capacity" error:**
+   - Try a different availability zone
+   - Try a different instance class
+   - Wait a few minutes and retry
+
+2. **"VPC not found" error:**
+   - Ensure you're in the correct AWS region
+   - Use default VPC if available
+   - Create a new VPC if needed
+
+3. **"Subnet group not found" error:**
+   - Use default subnet group
+   - Or create a new DB subnet group in RDS → Subnet groups
+
+4. **Creation stuck at "Creating" status:**
+   - Normal: Takes 5-15 minutes
+   - If stuck >30 minutes, check AWS Service Health Dashboard
+   - Contact AWS Support if needed
+
+5. **Cost concerns:**
+   - Check estimated monthly cost before creating
+   - Use Free Tier template if eligible
+   - Consider stopping instance when not in use
 
 ### **Can't connect to RDS?**
 
