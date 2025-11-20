@@ -10,7 +10,7 @@ from datetime import datetime
 from kafka import KafkaConsumer
 import pymysql
 from dotenv import load_dotenv
-from sparksupport import clean_tweet, extract_pnr, classify_urgency
+from sparksupport import clean_tweet, extract_pnr, classify_urgency, extract_train_number, extract_delay_minutes, classify_severity
 
 # Load environment variables
 load_dotenv()
@@ -54,25 +54,64 @@ def save_complaint_to_db(complaint_data):
     try:
         cursor = connection.cursor()
         
-        # Prepare SQL insert statement
-        sql = """
-        INSERT INTO tweets 
-        (tweet, username, pnr, prediction, tweet_id, user_id, chat_id, source, time, response_status) 
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
+        # Try to insert with analytics columns (if they exist)
+        # If columns don't exist, fall back to basic insert
+        try:
+            # Check if analytics columns exist by attempting a query
+            cursor.execute("""
+                SELECT train_number, delay_minutes, severity_label, severity_score 
+                FROM tweets 
+                LIMIT 1
+            """)
+            has_analytics_columns = True
+        except:
+            has_analytics_columns = False
         
-        values = (
-            complaint_data.get('text', ''),
-            complaint_data.get('username', ''),
-            complaint_data.get('pnr'),
-            complaint_data.get('prediction', 0),
-            complaint_data.get('complaint_id'),
-            complaint_data.get('user_id'),
-            complaint_data.get('chat_id'),
-            'Telegram',
-            datetime.now(),
-            0  # response_status: 0 = not responded
-        )
+        if has_analytics_columns:
+            # Insert with analytics columns
+            sql = """
+            INSERT INTO tweets 
+            (tweet, username, pnr, prediction, tweet_id, user_id, chat_id, source, time, response_status,
+             train_number, delay_minutes, severity_label, severity_score) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            values = (
+                complaint_data.get('text', ''),
+                complaint_data.get('username', ''),
+                complaint_data.get('pnr'),
+                complaint_data.get('prediction', 0),
+                complaint_data.get('complaint_id'),
+                complaint_data.get('user_id'),
+                complaint_data.get('chat_id'),
+                'Telegram',
+                datetime.now(),
+                0,  # response_status: 0 = not responded
+                complaint_data.get('train_number'),
+                complaint_data.get('delay_minutes'),
+                complaint_data.get('severity_label'),
+                complaint_data.get('severity_score')
+            )
+        else:
+            # Fall back to basic insert (without analytics columns)
+            sql = """
+            INSERT INTO tweets 
+            (tweet, username, pnr, prediction, tweet_id, user_id, chat_id, source, time, response_status) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            values = (
+                complaint_data.get('text', ''),
+                complaint_data.get('username', ''),
+                complaint_data.get('pnr'),
+                complaint_data.get('prediction', 0),
+                complaint_data.get('complaint_id'),
+                complaint_data.get('user_id'),
+                complaint_data.get('chat_id'),
+                'Telegram',
+                datetime.now(),
+                0  # response_status: 0 = not responded
+            )
         
         cursor.execute(sql, values)
         connection.commit()
@@ -128,6 +167,9 @@ def process_message(message_data):
         cleaned_text = clean_tweet(text)
         pnr = extract_pnr(text)
         prediction = classify_urgency(cleaned_text)
+        train_number = extract_train_number(text)
+        delay_minutes = extract_delay_minutes(text)
+        severity_label, severity_score = classify_severity(text)
         
         complaint_type = "Emergency" if prediction == 1 else "Feedback"
         
@@ -139,7 +181,11 @@ def process_message(message_data):
             'prediction': prediction,
             'complaint_id': complaint_id,
             'user_id': user_id,
-            'chat_id': chat_id
+            'chat_id': chat_id,
+            'train_number': train_number,
+            'delay_minutes': delay_minutes,
+            'severity_label': severity_label,
+            'severity_score': severity_score
         }
         
         # Print processing info
@@ -150,7 +196,10 @@ def process_message(message_data):
         print(f"User: {username} (ID: {user_id})")
         print(f"Text: {text[:100]}{'...' if len(text) > 100 else ''}")
         print(f"PNR: {pnr if pnr else 'Not found'}")
+        print(f"Train: {train_number if train_number else 'Not found'}")
+        print(f"Delay: {delay_minutes} minutes" if delay_minutes else "Delay: Not found")
         print(f"Classification: {complaint_type} ({prediction})")
+        print(f"Severity: {severity_label} (score: {severity_score})")
         print(f"{'='*60}")
         
         # Save to database

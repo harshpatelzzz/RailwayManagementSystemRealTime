@@ -446,6 +446,154 @@
             background: var(--accent-blue);
         }
 
+        /* Analytics Section */
+        .analytics-section {
+            background: var(--matte-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .analytics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .analytics-header h3 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .analytics-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .analytics-tab {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border-color);
+            background: var(--matte-darker);
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .analytics-tab:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-primary);
+        }
+
+        .analytics-tab.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+
+        .analytics-content {
+            display: none;
+        }
+
+        .analytics-content.active {
+            display: block;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 2rem;
+            background: var(--matte-darker);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+
+        .chart-container canvas {
+            max-height: 100%;
+        }
+
+        .network-container {
+            height: 600px;
+            background: var(--matte-darker);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .live-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .live-stat-card {
+            background: var(--matte-darker);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .live-stat-card h4 {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .live-stat-card .value {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .live-stat-card .value.live {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stats-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-table td {
+            color: var(--text-primary);
+        }
+
+        .stats-table tr:hover {
+            background: var(--matte-darker);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .stat-card h2 {
@@ -454,6 +602,14 @@
             
             .train-container {
                 display: none;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+
+            .network-container {
+                height: 400px;
             }
         }
     </style>
@@ -527,6 +683,161 @@
             </div>
         </div>
 
+        <!-- Analytics Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="analytics-section">
+                    <div class="analytics-header">
+                        <h3><i class="fas fa-chart-bar"></i> Analytics & Real-Time Analysis</h3>
+                        <button class="btn refresh-btn" onclick="loadAnalytics()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+
+                    <div class="analytics-tabs">
+                        <button class="analytics-tab active" onclick="switchAnalyticsTab('complaint-type')">
+                            Complaint Type
+                        </button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('train')">
+                            Train Analytics
+                        </button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('source')">
+                            User/Source Analytics
+                        </button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('severity')">
+                            Severity Analysis
+                        </button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('live')">
+                            Real-Time Live
+                        </button>
+                        <button class="analytics-tab" onclick="switchAnalyticsTab('network')">
+                            Network Graph
+                        </button>
+                    </div>
+
+                    <!-- Complaint Type Analysis -->
+                    <div id="analytics-complaint-type" class="analytics-content active">
+                        <h5 class="mb-3">Complaint Type Distribution</h5>
+                        <div class="chart-container">
+                            <canvas id="complaintTypeChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="complaintTypeTimeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Train Analytics -->
+                    <div id="analytics-train" class="analytics-content">
+                        <h5 class="mb-3">Train Delay & Complaint Statistics</h5>
+                        <div class="chart-container">
+                            <canvas id="trainStatsChart"></canvas>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>Train Number</th>
+                                        <th>Total Complaints</th>
+                                        <th>Emergency</th>
+                                        <th>Feedback</th>
+                                        <th>Last Complaint</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trainStatsTable">
+                                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Source Analytics -->
+                    <div id="analytics-source" class="analytics-content">
+                        <h5 class="mb-3">User/Source Complaint Statistics</h5>
+                        <div class="chart-container">
+                            <canvas id="sourceStatsChart"></canvas>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="stats-table">
+                                <thead>
+                                    <tr>
+                                        <th>User/Source</th>
+                                        <th>Total Complaints</th>
+                                        <th>Emergency</th>
+                                        <th>Feedback</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sourceStatsTable">
+                                    <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Severity Analysis -->
+                    <div id="analytics-severity" class="analytics-content">
+                        <h5 class="mb-3">Severity & Sentiment Analysis</h5>
+                        <div class="chart-container">
+                            <canvas id="severityChart"></canvas>
+                        </div>
+                        <div class="live-stats-grid">
+                            <div class="live-stat-card">
+                                <h4>High Severity</h4>
+                                <div class="value" id="severity-high">0</div>
+                            </div>
+                            <div class="live-stat-card">
+                                <h4>Medium Severity</h4>
+                                <div class="value" id="severity-medium">0</div>
+                            </div>
+                            <div class="live-stat-card">
+                                <h4>Low Severity</h4>
+                                <div class="value" id="severity-low">0</div>
+                            </div>
+                            <div class="live-stat-card">
+                                <h4>Avg Severity Score</h4>
+                                <div class="value" id="severity-avg">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Real-Time Live Analytics -->
+                    <div id="analytics-live" class="analytics-content">
+                        <h5 class="mb-3">Real-Time Live Analytics</h5>
+                        <div class="live-stats-grid">
+                            <div class="live-stat-card">
+                                <h4>Total (Global)</h4>
+                                <div class="value live" id="live-total">0</div>
+                            </div>
+                            <div class="live-stat-card">
+                                <h4>Emergency (Global)</h4>
+                                <div class="value live" id="live-emergency">0</div>
+                            </div>
+                            <div class="live-stat-card">
+                                <h4>Feedback (Global)</h4>
+                                <div class="value live" id="live-feedback">0</div>
+                            </div>
+                            <div class="live-stat-card">
+                                <h4>Recent (Last 5 min)</h4>
+                                <div class="value live" id="live-recent">0</div>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="liveTimeSeriesChart"></canvas>
+                        </div>
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Last updated: <span id="live-timestamp">-</span></small>
+                        </div>
+                    </div>
+
+                    <!-- Network Graph -->
+                    <div id="analytics-network" class="analytics-content">
+                        <h5 class="mb-3">Graph-Based Network Analysis</h5>
+                        <p class="text-muted mb-3">Visualizing relationships between Users, Trains, and Complaint Categories</p>
+                        <div class="network-container" id="networkGraph"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Filter Buttons -->
         <div class="row mb-4">
             <div class="col-12">
@@ -560,6 +871,8 @@
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/vis-network@latest/dist/vis-network.min.js"></script>
     <script>
         let allTweets = [];
         let currentFilter = 'all';
@@ -818,11 +1131,381 @@
             return text ? text.replace(/[&<>"']/g, m => map[m]) : '';
         }
 
+        // Analytics Charts
+        let complaintTypeChart = null;
+        let complaintTypeTimeChart = null;
+        let trainStatsChart = null;
+        let sourceStatsChart = null;
+        let severityChart = null;
+        let liveTimeSeriesChart = null;
+        let networkGraph = null;
+        let currentAnalyticsTab = 'complaint-type';
+
+        function switchAnalyticsTab(tab) {
+            currentAnalyticsTab = tab;
+            $('.analytics-tab').removeClass('active');
+            $('.analytics-content').removeClass('active');
+            
+            // Find the correct tab button by index
+            const tabMap = {
+                'complaint-type': 0,
+                'train': 1,
+                'source': 2,
+                'severity': 3,
+                'live': 4,
+                'network': 5
+            };
+            $('.analytics-tab').eq(tabMap[tab]).addClass('active');
+            $(`#analytics-${tab}`).addClass('active');
+            
+            // Load data for the active tab
+            if (tab === 'complaint-type') {
+                loadComplaintTypeAnalytics();
+            } else if (tab === 'train') {
+                loadTrainAnalytics();
+            } else if (tab === 'source') {
+                loadSourceAnalytics();
+            } else if (tab === 'severity') {
+                loadSeverityAnalytics();
+            } else if (tab === 'live') {
+                loadLiveAnalytics();
+            } else if (tab === 'network') {
+                loadNetworkGraph();
+            }
+        }
+
+        function loadComplaintTypeAnalytics() {
+            fetch('/api/analytics/summary')
+                .then(r => r.json())
+                .then(data => {
+                    // Pie Chart
+                    const ctx1 = document.getElementById('complaintTypeChart');
+                    if (complaintTypeChart) complaintTypeChart.destroy();
+                    complaintTypeChart = new Chart(ctx1, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Emergency', 'Feedback'],
+                            datasets: [{
+                                data: [data.total_emergency, data.total_feedback],
+                                backgroundColor: ['#ff3b3b', '#3b82f6'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { color: '#e5e5e5' } }
+                            }
+                        }
+                    });
+
+                    // Time Series Chart
+                    fetch('/api/analytics/time-series?window_minutes=60')
+                        .then(r => r.json())
+                        .then(timeData => {
+                            const ctx2 = document.getElementById('complaintTypeTimeChart');
+                            if (complaintTypeTimeChart) complaintTypeTimeChart.destroy();
+                            complaintTypeTimeChart = new Chart(ctx2, {
+                                type: 'line',
+                                data: {
+                                    labels: timeData.points.map(p => new Date(p.time).toLocaleTimeString()),
+                                    datasets: [
+                                        {
+                                            label: 'Emergency',
+                                            data: timeData.points.map(p => p.emergency),
+                                            borderColor: '#ff3b3b',
+                                            backgroundColor: 'rgba(255, 59, 59, 0.1)',
+                                            tension: 0.4
+                                        },
+                                        {
+                                            label: 'Feedback',
+                                            data: timeData.points.map(p => p.feedback),
+                                            borderColor: '#3b82f6',
+                                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                            tension: 0.4
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { labels: { color: '#e5e5e5' } }
+                                    },
+                                    scales: {
+                                        x: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } },
+                                        y: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } }
+                                    }
+                                }
+                            });
+                        });
+                });
+        }
+
+        function loadTrainAnalytics() {
+            fetch('/api/analytics/train-stats?limit=10')
+                .then(r => r.json())
+                .then(data => {
+                    // Bar Chart
+                    const ctx = document.getElementById('trainStatsChart');
+                    if (trainStatsChart) trainStatsChart.destroy();
+                    trainStatsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(t => `Train ${t.train_number}`),
+                            datasets: [
+                                {
+                                    label: 'Emergency',
+                                    data: data.map(t => t.emergency_count),
+                                    backgroundColor: '#ff3b3b'
+                                },
+                                {
+                                    label: 'Feedback',
+                                    data: data.map(t => t.feedback_count),
+                                    backgroundColor: '#3b82f6'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { labels: { color: '#e5e5e5' } }
+                            },
+                            scales: {
+                                x: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } },
+                                y: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } }
+                            }
+                        }
+                    });
+
+                    // Table
+                    const tableBody = document.getElementById('trainStatsTable');
+                    tableBody.innerHTML = data.map(t => `
+                        <tr>
+                            <td><strong>${t.train_number}</strong></td>
+                            <td>${t.total_complaints}</td>
+                            <td><span style="color: #ff3b3b">${t.emergency_count}</span></td>
+                            <td><span style="color: #3b82f6">${t.feedback_count}</span></td>
+                            <td>${t.last_complaint_time ? new Date(t.last_complaint_time).toLocaleString() : 'N/A'}</td>
+                        </tr>
+                    `).join('');
+                });
+        }
+
+        function loadSourceAnalytics() {
+            fetch('/api/analytics/source-stats?limit=10')
+                .then(r => r.json())
+                .then(data => {
+                    // Bar Chart
+                    const ctx = document.getElementById('sourceStatsChart');
+                    if (sourceStatsChart) sourceStatsChart.destroy();
+                    sourceStatsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.map(s => s.source_id || `User ${s.user_id}`),
+                            datasets: [
+                                {
+                                    label: 'Emergency',
+                                    data: data.map(s => s.emergency_count),
+                                    backgroundColor: '#ff3b3b'
+                                },
+                                {
+                                    label: 'Feedback',
+                                    data: data.map(s => s.feedback_count),
+                                    backgroundColor: '#3b82f6'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { labels: { color: '#e5e5e5' } }
+                            },
+                            scales: {
+                                x: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } },
+                                y: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } }
+                            }
+                        }
+                    });
+
+                    // Table
+                    const tableBody = document.getElementById('sourceStatsTable');
+                    tableBody.innerHTML = data.map(s => `
+                        <tr>
+                            <td><strong>${s.source_id || `User ${s.user_id}`}</strong></td>
+                            <td>${s.total_complaints}</td>
+                            <td><span style="color: #ff3b3b">${s.emergency_count}</span></td>
+                            <td><span style="color: #3b82f6">${s.feedback_count}</span></td>
+                        </tr>
+                    `).join('');
+                });
+        }
+
+        function loadSeverityAnalytics() {
+            fetch('/api/analytics/severity')
+                .then(r => r.json())
+                .then(data => {
+                    // Pie Chart
+                    const ctx = document.getElementById('severityChart');
+                    if (severityChart) severityChart.destroy();
+                    severityChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['High', 'Medium', 'Low'],
+                            datasets: [{
+                                data: [data.summary.high, data.summary.medium, data.summary.low],
+                                backgroundColor: ['#ff3b3b', '#f59e0b', '#10b981'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { color: '#e5e5e5' } }
+                            }
+                        }
+                    });
+
+                    // Update stats
+                    document.getElementById('severity-high').textContent = data.summary.high;
+                    document.getElementById('severity-medium').textContent = data.summary.medium;
+                    document.getElementById('severity-low').textContent = data.summary.low;
+                    document.getElementById('severity-avg').textContent = data.avg_score.toFixed(2);
+                });
+        }
+
+        function loadLiveAnalytics() {
+            fetch('/api/analytics/live?window_minutes=5')
+                .then(r => r.json())
+                .then(data => {
+                    // Update live stats
+                    document.getElementById('live-total').textContent = data.global.total;
+                    document.getElementById('live-emergency').textContent = data.global.emergency;
+                    document.getElementById('live-feedback').textContent = data.global.feedback;
+                    document.getElementById('live-recent').textContent = data.recent.total;
+                    document.getElementById('live-timestamp').textContent = data.timestamp ? new Date(data.timestamp).toLocaleString() : '-';
+
+                    // Time Series Chart
+                    fetch('/api/analytics/time-series?window_minutes=60')
+                        .then(r => r.json())
+                        .then(timeData => {
+                            const ctx = document.getElementById('liveTimeSeriesChart');
+                            if (liveTimeSeriesChart) liveTimeSeriesChart.destroy();
+                            liveTimeSeriesChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: timeData.points.map(p => new Date(p.time).toLocaleTimeString()),
+                                    datasets: [{
+                                        label: 'Total Complaints',
+                                        data: timeData.points.map(p => p.total),
+                                        borderColor: '#3b82f6',
+                                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                        tension: 0.4,
+                                        fill: true
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    plugins: {
+                                        legend: { labels: { color: '#e5e5e5' } }
+                                    },
+                                    scales: {
+                                        x: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } },
+                                        y: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2a2a' } }
+                                    }
+                                }
+                            });
+                        });
+                });
+        }
+
+        function loadNetworkGraph() {
+            fetch('/api/analytics/graph')
+                .then(r => r.json())
+                .then(data => {
+                    const container = document.getElementById('networkGraph');
+                    
+                    // Prepare nodes and edges for vis-network
+                    const nodes = new vis.DataSet(data.nodes.map(node => ({
+                        id: node.id,
+                        label: node.label,
+                        color: getNodeColor(node.type),
+                        size: node.size,
+                        shape: node.type === 'complaint' ? 'dot' : node.type === 'train' ? 'square' : 'diamond'
+                    })));
+
+                    const edges = new vis.DataSet(data.edges.map(edge => ({
+                        from: edge.source,
+                        to: edge.target,
+                        color: { color: '#2a2a2a', highlight: '#3b82f6' },
+                        width: 1
+                    })));
+
+                    const graphData = { nodes, edges };
+                    const options = {
+                        nodes: {
+                            font: { color: '#e5e5e5', size: 14 },
+                            borderWidth: 2
+                        },
+                        edges: {
+                            smooth: { type: 'continuous' }
+                        },
+                        physics: {
+                            enabled: true,
+                            stabilization: { iterations: 200 }
+                        },
+                        interaction: {
+                            hover: true,
+                            tooltipDelay: 100
+                        }
+                    };
+
+                    if (networkGraph) {
+                        networkGraph.destroy();
+                    }
+                    networkGraph = new vis.Network(container, graphData, options);
+                });
+        }
+
+        function getNodeColor(type) {
+            const colors = {
+                'user': '#3b82f6',
+                'train': '#f59e0b',
+                'complaint': '#9ca3af',
+                'category': { background: '#ff3b3b', border: '#ff3b3b' }
+            };
+            return colors[type] || '#9ca3af';
+        }
+
+        function loadAnalytics() {
+            if (currentAnalyticsTab === 'complaint-type') loadComplaintTypeAnalytics();
+            else if (currentAnalyticsTab === 'train') loadTrainAnalytics();
+            else if (currentAnalyticsTab === 'source') loadSourceAnalytics();
+            else if (currentAnalyticsTab === 'severity') loadSeverityAnalytics();
+            else if (currentAnalyticsTab === 'live') loadLiveAnalytics();
+            else if (currentAnalyticsTab === 'network') loadNetworkGraph();
+        }
+
         // Initialize
         $(document).ready(function() {
             loadDataFromAPI();
             // Auto-refresh every 10 seconds
             setInterval(loadDataFromAPI, 10000);
+            
+            // Load analytics on page load
+            loadComplaintTypeAnalytics();
+            
+            // Auto-refresh live analytics every 5 seconds
+            setInterval(() => {
+                if (currentAnalyticsTab === 'live') {
+                    loadLiveAnalytics();
+                }
+            }, 5000);
         });
     </script>
 </body>
