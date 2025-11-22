@@ -10,7 +10,8 @@ from datetime import datetime
 from kafka import KafkaConsumer
 import pymysql
 from dotenv import load_dotenv
-from sparksupport import clean_tweet, extract_pnr, classify_urgency, extract_train_number, extract_delay_minutes, classify_severity
+from sparksupport import clean_tweet, extract_pnr, extract_train_number, extract_delay_minutes, classify_severity
+from ml_predictor import classify_urgency_ml
 
 # Load environment variables
 load_dotenv()
@@ -166,7 +167,13 @@ def process_message(message_data):
         # Process the complaint
         cleaned_text = clean_tweet(text)
         pnr = extract_pnr(text)
-        prediction = classify_urgency(cleaned_text)
+        
+        # Use ML model for classification (with rule-based fallback)
+        from ml_predictor import get_predictor
+        predictor = get_predictor()
+        prediction = classify_urgency_ml(text)
+        prediction_method = "ML Model" if predictor.is_available() else "Rule-Based"
+        
         train_number = extract_train_number(text)
         delay_minutes = extract_delay_minutes(text)
         severity_label, severity_score = classify_severity(text)
@@ -198,7 +205,7 @@ def process_message(message_data):
         print(f"PNR: {pnr if pnr else 'Not found'}")
         print(f"Train: {train_number if train_number else 'Not found'}")
         print(f"Delay: {delay_minutes} minutes" if delay_minutes else "Delay: Not found")
-        print(f"Classification: {complaint_type} ({prediction})")
+        print(f"Classification: {complaint_type} ({prediction}) [{prediction_method}]")
         print(f"Severity: {severity_label} (score: {severity_score})")
         print(f"{'='*60}")
         
@@ -229,6 +236,16 @@ def main():
     print(f"Kafka Broker: {KAFKA_BROKER}")
     print(f"Kafka Topic: {KAFKA_TOPIC}")
     print(f"Database: {DB_HOST}:{DB_PORT}/{DB_NAME}")
+    
+    # Check ML model availability
+    from ml_predictor import get_predictor
+    predictor = get_predictor()
+    if predictor.is_available():
+        print("[OK] ML Model: Loaded and ready")
+    else:
+        print("[WARNING] ML Model: Not found, using rule-based classification")
+        print("   To train ML model, run: python train_ml_model.py")
+    
     print("="*60)
     print("\nStarting consumer...")
     print("Waiting for messages from Kafka...")

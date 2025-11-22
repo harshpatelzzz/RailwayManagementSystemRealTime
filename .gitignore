@@ -73,3 +73,6 @@ tmp/
 temp/
 *.tmp
 
+# Documentation files (keep locally only)
+*.md
+
